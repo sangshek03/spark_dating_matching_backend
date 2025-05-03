@@ -1,98 +1,60 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Spark Dating Matchmaking Backend
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+A high-performance, in-memory backend service for a dating app, built with NestJS. It supports user registration, geolocation-based matchmaking, and compatibility scoring — all versioned under /api/v1
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## Features
 
-## Description
+- In-memory profile storage with fast O(1) lookups
+- Geohash-based spatial indexing for location proximity matching
+- Precomputed match scores for constant-time match retrieval
+- Matching algorithm based on age, interests, and location
+- Support for exclusions (matched, blocked, disliked users)
+- Seeding endpoint for generating test data
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## Architecture
 
-## Project setup
+### Data Structures
 
-```bash
-$ npm install
-```
+- **User Profiles**: Stored in a Map with user IDs as keys for O(1) lookups
+- **Quadrant Index**: Geohash-based spatial index using a Map with geohash prefixes as keys
+- **Match Scores**: Each user has a priority queue of potential matches, sorted by score
+- **Exclusions**: Sets of excluded user IDs for constant-time exclusion checks
 
-## Compile and run the project
+### Precomputation Strategy
 
-```bash
-# development
-$ npm run start
+When a new user registers or updates their profile:
+1. Calculate their geohash to determine their quadrant
+2. Find users in the same and adjacent quadrants
+3. Calculate match scores with these nearby users
+4. Store the best matches in priority queues for both users
+5. Apply exclusion filters when retrieving matches
 
-# watch mode
-$ npm run start:dev
+This approach ensures that match retrieval is nearly constant-time O(1), as we're simply retrieving a pre-sorted list and applying exclusion filters.
 
-# production mode
-$ npm run start:prod
-```
+## PostMan Collection
 
-## Run tests
+- Not using real DB, So you need to seed data 1st to get match.
+- 1st Generate/Seed data by hiting endpoint -> {{base_url}}/api/v1/seed?count=20, (count is for how many user you want to seed in)
+- Now onwards you can create user profile by hitting -> {{base_url}}/api/v1/profiles (providing correct payload)
+- Now you can get top 5 matches by hitting -> {{base_url}}/api/v1/match/:user_id?count=4 (max can get 5, if u give 8 then it give max 5 users)
 
-```bash
-# unit tests
-$ npm run test
+link: https://abc777-2596.postman.co/workspace/Abhishek~f4c785a7-01d0-4635-b7db-8706850e9264/collection/30890660-2214b394-e359-45af-84b5-5e8bc4fba9bd?action=share&creator=30890660&active-environment=30890660-b5e53170-d3b0-418c-a199-135a2d64d732
 
-# e2e tests
-$ npm run test:e2e
 
-# test coverage
-$ npm run test:cov
-```
+## Optional Add On in comming 24 hrs:
+- unit tests for geohash logic, exclusions, and match scoring
+- Gender prefrence
+- Pagination
+- User Update Endpoints
 
-## Deployment
-
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+### Installation
 
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
-```
+# Install dependencies
+npm install
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+# Start the application
+npm run start
 
-## Resources
-
-Check out a few resources that may come in handy when working with NestJS:
-
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+# Start in development mode
+npm run start:dev
